@@ -22,11 +22,23 @@ var fetchCmd = &cobra.Command{
 var branchCmd = &cobra.Command{
 	Use:     "branch <name>",
 	Aliases: []string{"br"},
-	Short:   "Create and checkout a new branch",
-	Long:    `Create a new branch and switch to it (git checkout -b).`,
-	Args:    cobra.ExactArgs(1),
+	Short:   "Create and checkout a new branch, or switch to previous with '-'",
+	Long: `Create a new branch and switch to it (git checkout -b).
+Use '-' as the branch name to switch to the previous branch.
+
+Examples:
+  tz branch feature-x    # Create and checkout new branch
+  tz br -                # Switch to previous branch`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		branchName := args[0]
+
+		// Special case: switch to previous branch
+		if branchName == "-" {
+			return executor.Execute("git checkout -")
+		}
+
+		// Normal case: create and checkout new branch
 		return executor.Execute(fmt.Sprintf("git checkout -b %s", branchName))
 	},
 }
