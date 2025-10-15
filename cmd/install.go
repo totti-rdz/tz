@@ -2,10 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/totti-rdz/tz/internal/config"
 	"github.com/totti-rdz/tz/internal/executor"
+)
+
+var (
+	installDevFlag bool
 )
 
 var installCmd = &cobra.Command{
@@ -18,7 +23,8 @@ Use 'tz map install <command>' to configure the install command for this project
 
 Examples:
   tz install       # Run the configured install command
-  tz i             # Same, using alias`,
+  tz i             # Same, using alias
+  tz i -D          # Install as dev dependency (npm/yarn/pnpm/bun only)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()
@@ -38,6 +44,19 @@ Examples:
 			return fmt.Errorf("%w\n\nTip: Run 'tz map install \"<your-install-command>\"' to set it up", err)
 		}
 
+		// Handle -D flag for dev dependencies
+		if installDevFlag {
+			if strings.Contains(command, "npm") || strings.Contains(command, "pnpm") {
+				command += " --save-dev"
+			} else if strings.Contains(command, "yarn") {
+				command += " --dev"
+			} else if strings.Contains(command, "bun") {
+				command += " -D"
+			} else {
+				return fmt.Errorf("-D flag is only supported for npm/yarn/pnpm/bun projects\nCurrent command: %s", command)
+			}
+		}
+
 		// Execute the command
 		if err := executor.Execute(command); err != nil {
 			return err
@@ -49,4 +68,5 @@ Examples:
 
 func init() {
 	rootCmd.AddCommand(installCmd)
+	installCmd.Flags().BoolVarP(&installDevFlag, "dev", "D", false, "Install as dev dependency (npm/yarn/pnpm/bun)")
 }
