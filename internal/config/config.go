@@ -14,11 +14,12 @@ type Config struct {
 
 // ProjectConfig holds command mappings for a specific project
 type ProjectConfig struct {
-	Install string `json:"install,omitempty"`
-	Dev     string `json:"dev,omitempty"`
-	Test    string `json:"test,omitempty"`
-	Build   string `json:"build,omitempty"`
-	Clear   string `json:"clear,omitempty"`
+	Install string            `json:"install,omitempty"`
+	Dev     string            `json:"dev,omitempty"`
+	Test    string            `json:"test,omitempty"`
+	Build   string            `json:"build,omitempty"`
+	Clear   string            `json:"clear,omitempty"`
+	Custom  map[string]string `json:"custom,omitempty"` // Custom user-defined commands
 }
 
 // configPath returns the path to the config file
@@ -36,7 +37,7 @@ func ensureConfigDir() error {
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
-	
+
 	tzDir := filepath.Join(home, ".tz")
 	if err := os.MkdirAll(tzDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .tz directory: %w", err)
@@ -116,7 +117,15 @@ func (c *Config) GetCommand(projectPath, commandName string) (string, error) {
 	case "clear":
 		cmd = projectCfg.Clear
 	default:
-		return "", fmt.Errorf("unknown command: %s", commandName)
+		// Check custom commands
+		if projectCfg.Custom != nil {
+			if customCmd, ok := projectCfg.Custom[commandName]; ok {
+				cmd = customCmd
+			}
+		}
+		if cmd == "" {
+			return "", fmt.Errorf("unknown command: %s", commandName)
+		}
 	}
 
 	if cmd == "" {
@@ -133,7 +142,7 @@ func (c *Config) SetCommand(projectPath, commandName, command string) error {
 	}
 
 	projectCfg := c.Projects[projectPath]
-	
+
 	switch commandName {
 	case "install":
 		projectCfg.Install = command
@@ -146,7 +155,11 @@ func (c *Config) SetCommand(projectPath, commandName, command string) error {
 	case "clear":
 		projectCfg.Clear = command
 	default:
-		return fmt.Errorf("unknown command: %s", commandName)
+		// Custom command
+		if projectCfg.Custom == nil {
+			projectCfg.Custom = make(map[string]string)
+		}
+		projectCfg.Custom[commandName] = command
 	}
 
 	c.Projects[projectPath] = projectCfg

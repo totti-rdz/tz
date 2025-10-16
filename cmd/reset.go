@@ -41,7 +41,7 @@ Examples:
 
 		// Build and execute the git reset command
 		gitCmd := fmt.Sprintf("git reset --soft HEAD~%d", count)
-		
+
 		if err := executor.Execute(gitCmd); err != nil {
 			return err
 		}

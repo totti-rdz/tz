@@ -15,31 +15,20 @@ var mapCmd = &cobra.Command{
 The mapping will be saved in ~/.tz/config.json and associated with 
 the current directory.
 
-Available commands to map: install, dev, test, build, clear
+Built-in commands: install, dev, test, build, clear
+You can also create custom commands with any name you want.
 
 Examples:
   tz map install "npm install"
   tz map dev "npm run start"
   tz map test "go test ./..."
-  tz map build "go build -o bin/app"
-  tz map clear "rm -rf dist"`,
+  tz map clear "rm -rf dist"
+  tz map docker "docker-compose up"
+  tz map seed "node scripts/seed.js"`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		commandName := args[0]
 		shellCommand := args[1]
-
-		// Validate command name
-		validCommands := map[string]bool{
-			"install": true,
-			"dev":     true,
-			"test":    true,
-			"build":   true,
-			"clear":   true,
-		}
-
-		if !validCommands[commandName] {
-			return fmt.Errorf("invalid command: %s. Valid commands are: install, dev, test, build, clear", commandName)
-		}
 
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()

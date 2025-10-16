@@ -35,7 +35,7 @@ Examples:
 		if logAllFlag {
 			// Full git log format
 			gitCmd = "git log"
-			
+
 			// Add count limit if provided
 			if len(args) > 0 {
 				countStr := strings.TrimPrefix(args[0], "-")
@@ -51,7 +51,7 @@ Examples:
 		} else {
 			// Oneline format (default)
 			gitCmd = "git log --oneline"
-			
+
 			// Add count limit if provided
 			if len(args) > 0 {
 				countStr := strings.TrimPrefix(args[0], "-")
