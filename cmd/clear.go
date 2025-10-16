@@ -7,7 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/totti-rdz/tz/internal/config"
+	"github.com/totti-rdz/tz/internal/detector"
 	"github.com/totti-rdz/tz/internal/executor"
+	"github.com/totti-rdz/tz/internal/prompt"
 )
 
 var (
@@ -42,7 +44,29 @@ Examples:
 		// Get the command mapping
 		command, err := cfg.GetCommand(projectPath, "clear")
 		if err != nil {
-			return fmt.Errorf("%w\n\nTip: Run 'tz map clear \"<your-clear-command>\"' to set it up", err)
+			// No mapping found - try auto-detection
+			suggestedCmd, projectType := detector.GetSuggestion(projectPath, "clear")
+
+			if suggestedCmd == "" || projectType == detector.Unknown {
+				return fmt.Errorf("no mapping found for 'clear' in this project\n\nTip: Run 'tz map clear \"<your-clear-command>\"' to set it up")
+			}
+
+			// Ask user for confirmation
+			if !prompt.ConfirmCommand(string(projectType), "clear", suggestedCmd) {
+				return fmt.Errorf("cancelled")
+			}
+
+			// Save the mapping
+			if err := cfg.SetCommand(projectPath, "clear", suggestedCmd); err != nil {
+				return fmt.Errorf("failed to save mapping: %w", err)
+			}
+
+			if err := cfg.Save(); err != nil {
+				return fmt.Errorf("failed to save config: %w", err)
+			}
+
+			command = suggestedCmd
+			fmt.Printf("✓ Saved mapping: clear -> \"%s\"\n\n", command)
 		}
 
 		// Execute the mapped clear command
