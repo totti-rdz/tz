@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/totti-rdz/tz/internal/config"
@@ -11,7 +12,7 @@ import (
 )
 
 var buildCmd = &cobra.Command{
-	Use:     "build",
+	Use:     "build [args...]",
 	Aliases: []string{"b"},
 	Short:   "Build current project",
 	Long: `Run the build command configured for the current project.
@@ -19,8 +20,9 @@ var buildCmd = &cobra.Command{
 Use 'tz map build <command>' to configure the build command for this project.
 
 Examples:
-  tz build     # Run the configured build command
-  tz b         # Same, using alias`,
+  tz build              # Run the configured build command
+  tz b                  # Same, using alias
+  tz b --production     # Pass custom arguments`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()
@@ -60,6 +62,11 @@ Examples:
 
 			command = suggestedCmd
 			fmt.Printf("✓ Saved mapping: build -> \"%s\"\n\n", command)
+		}
+
+		// Append any additional arguments
+		if len(args) > 0 {
+			command += " " + strings.Join(args, " ")
 		}
 
 		// Execute the command

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/totti-rdz/tz/internal/config"
@@ -11,7 +12,7 @@ import (
 )
 
 var testCmd = &cobra.Command{
-	Use:     "test",
+	Use:     "test [args...]",
 	Aliases: []string{"t"},
 	Short:   "Run tests for current project",
 	Long: `Run the test command configured for the current project.
@@ -19,8 +20,10 @@ var testCmd = &cobra.Command{
 Use 'tz map test <command>' to configure the test command for this project.
 
 Examples:
-  tz test      # Run the configured tests
-  tz t         # Same, using alias`,
+  tz test              # Run all tests
+  tz t                 # Same, using alias
+  tz t user.test.js    # Run specific test file
+  tz t --watch         # Pass custom arguments`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()
@@ -60,6 +63,11 @@ Examples:
 
 			command = suggestedCmd
 			fmt.Printf("✓ Saved mapping: test -> \"%s\"\n\n", command)
+		}
+
+		// Append any additional arguments
+		if len(args) > 0 {
+			command += " " + strings.Join(args, " ")
 		}
 
 		// Execute the command

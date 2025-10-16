@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/totti-rdz/tz/internal/config"
@@ -11,7 +12,7 @@ import (
 )
 
 var devCmd = &cobra.Command{
-	Use:     "dev",
+	Use:     "dev [args...]",
 	Aliases: []string{"d"},
 	Short:   "Run dev server for current project",
 	Long: `Run the dev server command configured for the current project.
@@ -19,8 +20,9 @@ var devCmd = &cobra.Command{
 Use 'tz map dev <command>' to configure the dev command for this project.
 
 Examples:
-  tz dev       # Run the configured dev server
-  tz d         # Same, using alias`,
+  tz dev              # Run the configured dev server
+  tz d                # Same, using alias
+  tz d --port 8080    # Pass custom arguments`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()
@@ -60,6 +62,11 @@ Examples:
 
 			command = suggestedCmd
 			fmt.Printf("✓ Saved mapping: dev -> \"%s\"\n\n", command)
+		}
+
+		// Append any additional arguments
+		if len(args) > 0 {
+			command += " " + strings.Join(args, " ")
 		}
 
 		// Execute the command
