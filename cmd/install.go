@@ -16,7 +16,7 @@ var (
 )
 
 var installCmd = &cobra.Command{
-	Use:     "install",
+	Use:     "install [packages...]",
 	Aliases: []string{"i"},
 	Short:   "Run install command for current project",
 	Long: `Run the install command configured for the current project.
@@ -24,9 +24,11 @@ var installCmd = &cobra.Command{
 Use 'tz map install <command>' to configure the install command for this project.
 
 Examples:
-  tz install       # Run the configured install command
-  tz i             # Same, using alias
-  tz i -D          # Install as dev dependency (npm/yarn/pnpm/bun only)`,
+  tz install           # Run the configured install command
+  tz i                 # Same, using alias
+  tz i express         # Install express package
+  tz i express axios   # Install multiple packages
+  tz i -D nodemon      # Install as dev dependency (npm/yarn/pnpm/bun only)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Get current project path
 		projectPath, err := config.GetCurrentProjectPath()
@@ -66,6 +68,11 @@ Examples:
 
 			command = suggestedCmd
 			fmt.Printf("✓ Saved mapping: install -> \"%s\"\n\n", command)
+		}
+
+		// Append any package names or additional arguments
+		if len(args) > 0 {
+			command += " " + strings.Join(args, " ")
 		}
 
 		// Handle -D flag for dev dependencies
