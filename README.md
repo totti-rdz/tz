@@ -107,20 +107,49 @@ tz map build "webpack --mode production"
 tz map clear "rm -rf dist build"
 ```
 
+### ✨ Custom Commands
+
+Create your own project-specific commands with any name:
+
+```bash
+tz map docker "docker-compose up"
+tz map db "docker-compose --profile infrastructure up"
+tz map seed "node scripts/seed.js"
+tz map deploy "npm run build && firebase deploy"
+```
+
+Then run them directly:
+
+```bash
+tz docker           # Runs your docker command
+tz db               # Starts database services
+tz seed --reset     # Arguments are passed through
+```
+
+Custom commands support all the same features as built-in commands (argument passing, etc.).
+
 ### 🎮 Git Shortcuts
 
 Universal git commands that work the same in every project:
 
-| Command       | Alias     | Description               | Example           |
-| ------------- | --------- | ------------------------- | ----------------- |
-| `tz fetch`    | `tz f`    | Git fetch                 | `tz f`            |
-| `tz branch`   | `tz br`   | Create/checkout branch    | `tz br feature-x` |
-| `tz branch -` | `tz br -` | Switch to previous branch | `tz br -`         |
-| `tz status`   | `tz s`    | Git status                | `tz s`            |
-| `tz reset`    | `tz r`    | Soft reset commits        | `tz r 2`          |
-| `tz log`      | `tz l`    | View commit history       | `tz l 10`         |
+| Command       | Alias     | Description                      | Example                                |
+| ------------- | --------- | -------------------------------- | -------------------------------------- |
+| `tz fetch`    | `tz f`    | Git fetch                        | `tz f`                                 |
+| `tz branch`   | `tz br`   | Create/checkout branch           | `tz br feature-x`                      |
+| `tz branch -` | `tz br -` | Switch to previous branch        | `tz br -`                              |
+| `tz status`   | `tz s`    | Git status                       | `tz s`                                 |
+| `tz reset`    | `tz r`    | Soft reset commits               | `tz r 2`                               |
+| `tz log`      | `tz l`    | View commit history              | `tz l 10`                              |
+| `tz clone`    | -         | Clone repo and open in VS Code   | `tz clone https://github.com/user/repo` |
 
 #### Advanced Git Features:
+
+**Clone and open projects:**
+
+```bash
+tz clone https://github.com/user/repo.git    # Clone and open in VS Code
+tz clone git@github.com:user/repo.git        # Works with SSH URLs too
+```
 
 **Reset commits safely:**
 
@@ -166,6 +195,18 @@ tz b                       # Build binary
 ### Mix of Everything
 
 ```bash
+# Clone a new project
+tz clone https://github.com/user/awesome-project.git
+
+# Set up custom commands
+tz map docker "docker-compose up"
+tz map seed "node scripts/seed.js"
+
+# Use them
+tz docker                  # Start containers
+tz seed --force            # Seed database
+
+# Regular workflow
 tz i axios                 # Install package
 tz f                       # Fetch from remote
 tz br feature/api          # Create feature branch
@@ -173,6 +214,7 @@ tz d                       # Start dev server
 tz t api.test.js           # Run specific test
 tz s                       # Check git status
 tz b                       # Build
+tz r                       # Undo last commit
 tz r                       # Undo last commit
 tz l 5                     # View last 5 commits
 ```
@@ -189,7 +231,12 @@ All mappings are stored in `~/.tz/config.json`:
       "dev": "npm run dev",
       "test": "npm test",
       "build": "npm run build",
-      "clear": "rm -rf dist"
+      "clear": "rm -rf dist",
+      "custom": {
+        "docker": "docker-compose up",
+        "db": "docker-compose --profile infrastructure up",
+        "seed": "node scripts/seed.js"
+      }
     },
     "/Users/you/my-go-app": {
       "install": "go mod download",
