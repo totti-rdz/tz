@@ -9,6 +9,7 @@ import (
 
 // Config represents the structure of ~/.tz/config.json
 type Config struct {
+	Global   map[string]string        `json:"global,omitempty"` // Global commands available everywhere
 	Projects map[string]ProjectConfig `json:"projects"`
 }
 
@@ -100,39 +101,58 @@ func (c *Config) Save() error {
 // GetCommand retrieves the command mapping for the current project
 func (c *Config) GetCommand(projectPath, commandName string) (string, error) {
 	projectCfg, exists := c.Projects[projectPath]
-	if !exists {
-		return "", fmt.Errorf("no configuration found for project: %s", projectPath)
-	}
 
 	var cmd string
-	switch commandName {
-	case "install":
-		cmd = projectCfg.Install
-	case "dev":
-		cmd = projectCfg.Dev
-	case "test":
-		cmd = projectCfg.Test
-	case "build":
-		cmd = projectCfg.Build
-	case "clear":
-		cmd = projectCfg.Clear
-	default:
-		// Check custom commands
-		if projectCfg.Custom != nil {
-			if customCmd, ok := projectCfg.Custom[commandName]; ok {
-				cmd = customCmd
-			}
+
+	// For built-in commands, require project config
+	builtInCommands := map[string]bool{
+		"install": true,
+		"dev":     true,
+		"test":    true,
+		"build":   true,
+		"clear":   true,
+	}
+
+	if builtInCommands[commandName] {
+		if !exists {
+			return "", fmt.Errorf("no configuration found for project: %s", projectPath)
 		}
+
+		switch commandName {
+		case "install":
+			cmd = projectCfg.Install
+		case "dev":
+			cmd = projectCfg.Dev
+		case "test":
+			cmd = projectCfg.Test
+		case "build":
+			cmd = projectCfg.Build
+		case "clear":
+			cmd = projectCfg.Clear
+		}
+
 		if cmd == "" {
-			return "", fmt.Errorf("unknown command: %s", commandName)
+			return "", fmt.Errorf("no mapping found for '%s' in project: %s", commandName, projectPath)
+		}
+
+		return cmd, nil
+	}
+
+	// For custom commands, check project-specific first, then global
+	if exists && projectCfg.Custom != nil {
+		if customCmd, ok := projectCfg.Custom[commandName]; ok {
+			return customCmd, nil
 		}
 	}
 
-	if cmd == "" {
-		return "", fmt.Errorf("no mapping found for '%s' in project: %s", commandName, projectPath)
+	// Fall back to global custom commands
+	if c.Global != nil {
+		if globalCmd, ok := c.Global[commandName]; ok {
+			return globalCmd, nil
+		}
 	}
 
-	return cmd, nil
+	return "", fmt.Errorf("unknown command: %s", commandName)
 }
 
 // SetCommand sets a command mapping for a project
@@ -163,6 +183,29 @@ func (c *Config) SetCommand(projectPath, commandName, command string) error {
 	}
 
 	c.Projects[projectPath] = projectCfg
+	return nil
+}
+
+// SetGlobalCommand sets a global command mapping
+func (c *Config) SetGlobalCommand(commandName, command string) error {
+	// Prevent overriding built-in commands globally
+	builtInCommands := map[string]bool{
+		"install": true,
+		"dev":     true,
+		"test":    true,
+		"build":   true,
+		"clear":   true,
+	}
+
+	if builtInCommands[commandName] {
+		return fmt.Errorf("cannot set built-in command '%s' as a global command", commandName)
+	}
+
+	if c.Global == nil {
+		c.Global = make(map[string]string)
+	}
+
+	c.Global[commandName] = command
 	return nil
 }
 

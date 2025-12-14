@@ -1,6 +1,6 @@
 # tz - Development Command Tool
 
-A lightweight CLI tool written in Go to streamline development commands across multiple projects with minimal keystrokes.
+A lightweight CLI tool written in Go to streamline development commands across multiple projects with minimal keystrokes. Supports project specific commands and globally defined commands.
 
 ## Philosophy
 
@@ -128,19 +128,58 @@ tz seed --reset     # Arguments are passed through
 
 Custom commands support all the same features as built-in commands (argument passing, etc.).
 
+### 🌎 Global Commands
+
+Create commands that work across **all projects**, not just one:
+
+```bash
+tz map --global hello "echo 'hello world'"
+tz map -g myglobalscript "echo 'Available everywhere'"
+```
+
+Global commands are perfect for personal scripts and tools you use across multiple projects:
+
+```bash
+# Set up once
+tz map --global lint-all "find . -name '*.js' | xargs eslint"
+tz map --global backup "rsync -av . ~/backups/$(basename $PWD)"
+
+# Use anywhere
+cd /any/project
+tz lint-all        # Works!
+tz backup          # Works everywhere!
+```
+
+**Priority system:**
+
+- Project-specific commands override global commands
+- Built-in commands (`install`, `dev`, `test`, `build`, `clear`) cannot be global
+
+```bash
+# Global command
+tz map --global docker "docker ps"
+
+# Override in specific project
+cd /my/project
+tz map docker "docker-compose up"
+
+# In /my/project: runs "docker-compose up"
+# Anywhere else: runs "docker ps"
+```
+
 ### 🎮 Git Shortcuts
 
 Universal git commands that work the same in every project:
 
-| Command       | Alias     | Description                      | Example                                |
-| ------------- | --------- | -------------------------------- | -------------------------------------- |
-| `tz fetch`    | `tz f`    | Git fetch                        | `tz f`                                 |
-| `tz branch`   | `tz br`   | Create/checkout branch           | `tz br feature-x`                      |
-| `tz branch -` | `tz br -` | Switch to previous branch        | `tz br -`                              |
-| `tz status`   | `tz s`    | Git status                       | `tz s`                                 |
-| `tz reset`    | `tz r`    | Soft reset commits               | `tz r 2`                               |
-| `tz log`      | `tz l`    | View commit history              | `tz l 10`                              |
-| `tz clone`    | -         | Clone repo and open in VS Code   | `tz clone https://github.com/user/repo` |
+|| Command       | Alias     | Description                    | Example                                 |
+| ------------- | --------- | ------------------------------ | --------------------------------------- |
+| `tz fetch`    | `tz f`    | Git fetch                      | `tz f`                                  |
+| `tz branch`   | `tz br`   | Create/checkout branch         | `tz br feature-x`                       |
+| `tz branch -` | `tz br -` | Switch to previous branch      | `tz br -`                               |
+| `tz status`   | `tz s`    | Git status                     | `tz s`                                  |
+| `tz reset`    | `tz r`    | Soft reset commits             | `tz r 2`                                |
+| `tz log`      | `tz l`    | View commit history            | `tz l 10`                               |
+| `tz clone`    | -         | Clone repo and open in VS Code | `tz clone https://github.com/user/repo` |
 
 #### Advanced Git Features:
 
@@ -225,6 +264,10 @@ All mappings are stored in `~/.tz/config.json`:
 
 ```json
 {
+  "global": {
+    "hello": "echo 'hello world'",
+    "backup": "rsync -av . ~/backups/$(basename $PWD)"
+  },
   "projects": {
     "/Users/you/my-project": {
       "install": "npm install",
